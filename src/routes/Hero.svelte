@@ -46,7 +46,7 @@ function image_function_changer(adjusted_image) {
     }
 
     adjusted_image.addEventListener("pointerenter", pause);
-    adjusted_image.addEventListener("pointerleave", pause);
+    adjusted_image.addEventListener("pointerleave", resume);
     frame_id = requestAnimationFrame(animate);
 
  return {
@@ -91,6 +91,40 @@ function move_background(node) {
 }
 
 
+function pan_square(node, { x, y }) {
+  let animation_frame_id = null;
+
+  function pan_screen() {
+    window.scrollBy(x, y);
+    animation_frame_id = requestAnimationFrame(pan_screen);
+  }
+
+  function start() {
+    if (!animation_frame_id) {
+      animation_frame_id = requestAnimationFrame(pan_screen);
+    }
+  }
+
+  function stop() {
+    cancelAnimationFrame(animation_frame_id);
+    animation_frame_id = null;
+  }
+
+  node.addEventListener('pointerenter', start);
+  node.addEventListener('pointerleave', stop);
+
+  return {
+    update(newParams) {
+      x = newParams.x;
+      y = newParams.y;
+    },
+    destroy() {
+      stop();
+      node.removeEventListener('pointerenter', start);
+      node.removeEventListener('pointerleave', stop);
+    }
+  };
+}
 
 function random_size(node) {
 image_function_changer(node).random_size();
@@ -111,7 +145,6 @@ return image_function_changer(node).random_move();
 function cursor_panning(node) {
 return move_background(node);
 }
-
 
 let artwork = [
 { id: "0",
@@ -138,11 +171,20 @@ let artwork = [
 <svelte:window bind:innerWidth={window_width} bind:innerHeight={window_height} />
 
 
+<div class="four_square_container">
+  <div class="four_square red" use:pan_square={{ x: -10, y: -10 }}></div>
+  <div class="four_square blue" use:pan_square={{ x: 10, y: -10 }}></div>
+  <div class="four_square orange" use:pan_square={{ x: -10, y: 10 }}></div>
+  <div class="four_square green" use:pan_square={{ x: 10, y: 10 }}></div>
+</div>
+
+
 <main 
 bind:this={main_section} 
 class="main_section"
 use:cursor_panning
 >
+
 <div class="title">
 <h1>BABs Art</h1>
 </div>
@@ -190,13 +232,61 @@ transition: all 3s ease-in-out;
     left: -100vw;
     margin: auto;
     background-color: rgba(0,0,0,0.95);
-    transition: transform 7s cubic-bezier(0.25, 1, 0.5, 1);
+    transform: translate(var(--pan-x, 0px), var(--pan-y, 0px));
     will-change: transform;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
 }
+
+.four_square_container {
+background-color: transparent;
+width: 100vw;
+height: 100vh;
+display: grid;
+grid-template-areas: 
+"red blue"
+"orange green";
+position: relative;
+}
+
+.four_square {
+z-index: 1000000000000;
+
+}
+
+
+.red {
+grid-area: red;
+background-color: red;
+background-color: transparent;
+opacity: 0.3;
+}
+
+.blue {
+grid-area: blue;
+background-color: blue;
+opacity: 0.3;
+background-color: transparent;
+}
+
+.orange {
+grid-area: orange;
+background-color: orange;
+opacity: 0.3;
+background-color: transparent;
+}
+
+.green {
+grid-area: green;
+background-color: green;
+opacity: 0.3;
+background-color: transparent;
+}
+
+
+
 
 
 .artwork {
@@ -211,6 +301,7 @@ position: static;
   border: 2px solid white;
   box-shadow: 0px 0px 30px #303030;
   transition: all 3s linear;
+  z-index: 10000000000000000000;
 }
 
 .artwork:hover {
