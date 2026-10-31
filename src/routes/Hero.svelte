@@ -56,7 +56,6 @@ function image_function_changer(adjusted_image) {
         adjusted_image.removeEventListener("pointerleave", resume);
       }
     };
-
   } 
 
   return {
@@ -67,6 +66,31 @@ function image_function_changer(adjusted_image) {
   };
 
 }
+
+function move_background(node) {
+  const maxShift = 1000;
+  function cursor_panning(e) {
+  if (!window_width || !window_height) return;
+
+  const xPercent = (e.clientX / window_width) - 0.6;
+  const yPercent = (e.clientY / window_height) - 0.6;
+
+  const moveX = -xPercent * maxShift;
+  const moveY = -yPercent * maxShift;
+
+  node.style.transform = `translate(${moveX}px, ${moveY}px)`;
+  }
+
+  window.addEventListener('mousemove', cursor_panning);
+
+  return {
+    destroy() {
+      window.removeEventListener('mousemove', cursor_panning);
+    }
+  };
+}
+
+
 
 function random_size(node) {
 image_function_changer(node).random_size();
@@ -82,6 +106,10 @@ image_function_changer(node).random_rotation();
 
 function random_move(node) {
 return image_function_changer(node).random_move();
+}
+
+function cursor_panning(node) {
+return move_background(node);
 }
 
 
@@ -110,7 +138,11 @@ let artwork = [
 <svelte:window bind:innerWidth={window_width} bind:innerHeight={window_height} />
 
 
-<main bind:this={main_section} class="main_section">
+<main 
+bind:this={main_section} 
+class="main_section"
+use:cursor_panning
+>
 <div class="title">
 <h1>BABs Art</h1>
 </div>
@@ -140,17 +172,36 @@ justify-content: center;
 }
 
 h1 {
-font-size: 5rem;
+font-size: 6rem;
+color: #202020;
+}
+
+h1:hover {
+color: #404040;
+text-shadow: 0px 0px 40px rgba(190,190,190,0.1);
+transition: all 3s ease-in-out;
 }
 
 .main_section {
-background-color: rgba(0,0,0,0.95);
+    position: fixed;
+    width: 300vw;
+    height: 300vh;
+    top: -100vh;
+    left: -100vw;
+    margin: auto;
+    background-color: rgba(0,0,0,0.95);
+    transition: transform 7s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
 }
 
 
 .artwork {
 position: static;
-  width: 40vw;
+  width: 30vw;
   cursor: pointer; 
   transform: 
     translateX(var(--move, 0px)) 
@@ -159,6 +210,7 @@ position: static;
     rotate(var(--rotation, 0deg));
   border: 2px solid white;
   box-shadow: 0px 0px 30px #303030;
+  transition: all 3s linear;
 }
 
 .artwork:hover {
