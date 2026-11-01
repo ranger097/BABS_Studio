@@ -2,9 +2,11 @@
 let main_section;
 let window_width;
 let window_height;
+let panX = 0;
+let panY = 0;
 
 function image_function_changer(adjusted_image) {
-  let scale = 0.4 + Math.random() * 0.1; 
+  const scale = 0.4 + Math.random() * 0.1; 
   function random_size() {
   adjusted_image.style.scale = `${scale * 2}`;
   }
@@ -36,7 +38,7 @@ function image_function_changer(adjusted_image) {
     frame_id = requestAnimationFrame(animate);
 
     }
-       
+        
     function pause() {
       paused = true;
     }
@@ -50,9 +52,9 @@ function image_function_changer(adjusted_image) {
     frame_id = requestAnimationFrame(animate);
 
  return {
-      destroy() {
-	cancelAnimationFrame(frame_id);
-	adjusted_image.removeEventListener("pointerenter", pause);
+     destroy() {
+    cancelAnimationFrame(frame_id);
+    adjusted_image.removeEventListener("pointerenter", pause);
         adjusted_image.removeEventListener("pointerleave", resume);
       }
     };
@@ -68,7 +70,7 @@ function image_function_changer(adjusted_image) {
 }
 
 function move_background(node) {
-  const maxShift = 1000;
+  const maxShift = 100;
   function cursor_panning(e) {
   if (!window_width || !window_height) return;
 
@@ -78,7 +80,7 @@ function move_background(node) {
   const moveX = -xPercent * maxShift;
   const moveY = -yPercent * maxShift;
 
-  node.style.transform = `translate(${moveX}px, ${moveY}px)`;
+  node.style.transform = `translate(calc(${moveX}px + ${panX}px), calc(${moveY}px + ${panY}px))`;
   }
 
   window.addEventListener('mousemove', cursor_panning);
@@ -94,20 +96,44 @@ function move_background(node) {
 function pan_square(node, { x, y }) {
   let animation_frame_id = null;
 
+  const MAX_PAN = 200; 
+  const MIN_PAN = -200;
+
   function pan_screen() {
-    window.scrollBy(x, y);
-    animation_frame_id = requestAnimationFrame(pan_screen);
+    let nextX = panX + x;
+    let nextY = panY + y;
+
+    if (nextX >= MIN_PAN && nextX <= MAX_PAN) {
+      panX = nextX;
+    }
+    if (nextY >= MIN_PAN && nextY <= MAX_PAN) {
+      panY = nextY;
+    }
+    
+    if (main_section) {
+      main_section.style.transform = `translate(${panX}px, ${panY}px)`;
+    }
+    
+    if ((x > 0 && panX < MAX_PAN) || (x < 0 && panX > MIN_PAN) ||
+        (y > 0 && panY < MAX_PAN) || (y < 0 && panY > MIN_PAN)) {
+      animation_frame_id = requestAnimationFrame(pan_screen);
+    } else {
+      animation_frame_id = null;
+    }
   }
 
-  function start() {
+  function start(e) {
+    e.stopPropagation();
     if (!animation_frame_id) {
       animation_frame_id = requestAnimationFrame(pan_screen);
     }
   }
 
   function stop() {
-    cancelAnimationFrame(animation_frame_id);
-    animation_frame_id = null;
+    if (animation_frame_id) {
+      cancelAnimationFrame(animation_frame_id);
+      animation_frame_id = null;
+    }
   }
 
   node.addEventListener('pointerenter', start);
@@ -118,6 +144,7 @@ function pan_square(node, { x, y }) {
       x = newParams.x;
       y = newParams.y;
     },
+
     destroy() {
       stop();
       node.removeEventListener('pointerenter', start);
@@ -125,6 +152,7 @@ function pan_square(node, { x, y }) {
     }
   };
 }
+
 
 function random_size(node) {
 image_function_changer(node).random_size();
@@ -147,44 +175,56 @@ return move_background(node);
 }
 
 let artwork = [
-{ id: "0",
-  image_url: "wallhaven-4yge8x.jpg",
-  description: "some random artwork",
-  tags: "random, art, yep"
-},
-{ id: "1",
-  image_url: "wallhaven-4yge8x.jpg",
-  description: "some random artwork",
-  tags: "random, art, yep"
-},
-{ id: "2",
-  image_url: "wallhaven-4yge8x.jpg",
-  description: "some random artwork",
-  tags: "random, art, yep"
-}
+{ id: "0", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "1", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "2", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "3", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "4", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "5", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "6", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "7", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "8", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "9", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "10", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "11", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "12", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "13", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "14", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "15", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "16", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "17", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "18", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "19", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "20", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "21", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "22", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "23", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "24", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "25", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "26", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "27", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "28", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "29", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "30", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "31", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
+{ id: "32", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" }
 ];
-
-
-
 </script>
 
 <svelte:window bind:innerWidth={window_width} bind:innerHeight={window_height} />
 
-
 <div class="four_square_container">
-  <div class="four_square red" use:pan_square={{ x: -10, y: -10 }}></div>
-  <div class="four_square blue" use:pan_square={{ x: 10, y: -10 }}></div>
-  <div class="four_square orange" use:pan_square={{ x: -10, y: 10 }}></div>
-  <div class="four_square green" use:pan_square={{ x: 10, y: 10 }}></div>
+  <div class="four_square red" use:pan_square={{ x: 1, y: 1 }}></div>
+  <div class="four_square blue" use:pan_square={{ x: -1, y: 1 }}></div>
+  <div class="four_square orange" use:pan_square={{ x: 1, y: -1 }}></div>
+  <div class="four_square green" use:pan_square={{ x: -1, y: -1 }}></div>
 </div>
-
 
 <main 
 bind:this={main_section} 
 class="main_section"
 use:cursor_panning
 >
-
 <div class="title">
 <h1>BABs Art</h1>
 </div>
@@ -201,96 +241,87 @@ use:random_rotation />
 </main>
 
 <style>
-
 .title {
-position: fixed;
-color: white;
-margin: auto;
-inset: 0;
-background-color: transparent;
-display: flex;
-align-items: center;
-justify-content: center;
+  position: fixed;
+  color: white;
+  margin: auto;
+  inset: 0;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 h1 {
-font-size: 6rem;
-color: #202020;
+  font-size: 6rem;
+  color: #202020;
 }
 
 h1:hover {
-color: #404040;
-text-shadow: 0px 0px 40px rgba(190,190,190,0.1);
-transition: all 3s ease-in-out;
+  color: #404040;
+  text-shadow: 0px 0px 40px rgba(190,190,190,0.1);
+  transition: all 3s ease-in-out;
 }
 
 .main_section {
-    position: fixed;
     width: 300vw;
     height: 300vh;
     top: -100vh;
     left: -100vw;
-    margin: auto;
     background-color: rgba(0,0,0,0.95);
-    transform: translate(var(--pan-x, 0px), var(--pan-y, 0px));
     will-change: transform;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
+    position: fixed;
 }
 
 .four_square_container {
-background-color: transparent;
-width: 100vw;
-height: 100vh;
-display: grid;
-grid-template-areas: 
-"red blue"
-"orange green";
-position: relative;
+  background-color: transparent;
+  position: relative;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-areas: 
+    "red blue"
+    "orange green";
+  z-index: 1000000000000;
+  pointer-events: none;
 }
 
 .four_square {
-z-index: 1000000000000;
-
+  position: relative;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
-
 .red {
-grid-area: red;
-background-color: red;
-background-color: transparent;
-opacity: 0.3;
+  grid-area: red;
+  opacity: 0.3;
+  background-color: transparent;
 }
 
 .blue {
-grid-area: blue;
-background-color: blue;
-opacity: 0.3;
-background-color: transparent;
+  grid-area: blue;
+  opacity: 0.3;
+  background-color: transparent;
 }
 
 .orange {
-grid-area: orange;
-background-color: orange;
-opacity: 0.3;
-background-color: transparent;
+  grid-area: orange;
+  opacity: 0.3;
+  background-color: transparent;
 }
 
 .green {
-grid-area: green;
-background-color: green;
-opacity: 0.3;
-background-color: transparent;
+  grid-area: green;
+  opacity: 0.3;
+  background-color: transparent;
 }
 
-
-
-
-
 .artwork {
-position: static;
   width: 30vw;
   cursor: pointer; 
   transform: 
@@ -301,7 +332,7 @@ position: static;
   border: 2px solid white;
   box-shadow: 0px 0px 30px #303030;
   transition: all 3s linear;
-  z-index: 10000000000000000000;
+  z-index: 100000;
 }
 
 .artwork:hover {
@@ -311,5 +342,4 @@ position: static;
   scale: 1 !important;
   z-index: 10000000000 !important;
 }
-
 </style>
