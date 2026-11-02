@@ -4,15 +4,16 @@ let window_width;
 let window_height;
 let panX = 0;
 let panY = 0;
+let isPaused;
 
 function image_function_changer(adjusted_image) {
-  const scale = 0.4 + Math.random() * 0.1; 
+  const scale = 0.4 + Math.random() * 0.5; 
   function random_size() {
   adjusted_image.style.scale = `${scale * 2}`;
   }
 
   function random_margin() {
-  adjusted_image.style.margin = `${100 * scale}px`;
+  adjusted_image.style.margin = `${2 * scale}px`;
   }
 
   function random_rotation() {
@@ -28,7 +29,7 @@ function image_function_changer(adjusted_image) {
     let image_height = adjusted_image.offsetHeight;
     function animate(time) {
     if (!paused) {
-    movementY -= 0.5; 
+    movementY -= 0; 
     adjusted_image.style.setProperty("--move", `${movementY}px`);
     adjusted_image.style.setProperty("--rot-deg", `${0}deg`);
     }
@@ -70,12 +71,12 @@ function image_function_changer(adjusted_image) {
 }
 
 function move_background(node) {
-  const maxShift = 100;
+  const maxShift = 1000;
   function cursor_panning(e) {
   if (!window_width || !window_height) return;
 
-  const xPercent = (e.clientX / window_width) - 0.6;
-  const yPercent = (e.clientY / window_height) - 0.6;
+  const xPercent = (e.clientX / window_width) - 0.5;
+  const yPercent = (e.clientY / window_height) - 0.5;
 
   const moveX = -xPercent * maxShift;
   const moveY = -yPercent * maxShift;
@@ -93,13 +94,14 @@ function move_background(node) {
 }
 
 
-function pan_square(node, { x, y }) {
+function pan_square(node, { x, y, isPaused }) {
   let animation_frame_id = null;
 
-  const MAX_PAN = 200; 
-  const MIN_PAN = -200;
+  const MAX_PAN = 5000; 
+  const MIN_PAN = -5000;
 
   function pan_screen() {
+    if (!isPaused) {
     let nextX = panX + x;
     let nextY = panY + y;
 
@@ -108,6 +110,7 @@ function pan_square(node, { x, y }) {
     }
     if (nextY >= MIN_PAN && nextY <= MAX_PAN) {
       panY = nextY;
+    }
     }
     
     if (main_section) {
@@ -121,6 +124,7 @@ function pan_square(node, { x, y }) {
       animation_frame_id = null;
     }
   }
+  
 
   function start(e) {
     e.stopPropagation();
@@ -143,6 +147,7 @@ function pan_square(node, { x, y }) {
     update(newParams) {
       x = newParams.x;
       y = newParams.y;
+      isPaused = newParams.isPaused;
     },
 
     destroy() {
@@ -173,6 +178,7 @@ return image_function_changer(node).random_move();
 function cursor_panning(node) {
 return move_background(node);
 }
+
 
 let artwork = [
 { id: "0", image_url: "wallhaven-4yge8x.jpg", description: "some random artwork", tags: "random, art, yep" },
@@ -214,42 +220,76 @@ let artwork = [
 <svelte:window bind:innerWidth={window_width} bind:innerHeight={window_height} />
 
 <div class="four_square_container">
-  <div class="four_square red" use:pan_square={{ x: 1, y: 1 }}></div>
-  <div class="four_square blue" use:pan_square={{ x: -1, y: 1 }}></div>
-  <div class="four_square orange" use:pan_square={{ x: 1, y: -1 }}></div>
-  <div class="four_square green" use:pan_square={{ x: -1, y: -1 }}></div>
+  <div class="four_square red" use:pan_square={{ x: 1, y: 1, isPaused }}></div>
+  <div class="four_square blue" use:pan_square={{ x: -1, y: 1, isPaused }}></div>
+  <div class="four_square orange" use:pan_square={{ x: 1, y: -1, isPaused }}></div>
+  <div class="four_square green" use:pan_square={{ x: -1, y: -1, isPaused }}></div>
 </div>
+
+<div class="stopMovement" use:pan_square={{ x: 0, y: 0, isPaused: true }}></div>
+
+
 
 <main 
 bind:this={main_section} 
 class="main_section"
 use:cursor_panning
 >
+
 <div class="title">
 <h1>BABs Art</h1>
 </div>
+
+<div class="image_container">
 {#each artwork as image, i (image.id)}
 <img 
 class="artwork"
 src={image.image_url} 
 alt={image.description}
-use:random_size
-use:random_move
-use:random_margin
-use:random_rotation />
+/>
 {/each}
+</div>
+
+
 </main>
 
 <style>
+
+* {
+  box-sizing: border-box;
+}
+
 .title {
   position: fixed;
-  color: white;
   margin: auto;
   inset: 0;
+  color: white;
   background-color: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 80vw;
+  height: 80vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.stopMovement {
+  position: fixed;
+  margin: auto;
+  inset: 0;
+  color: white;
+  background-color: red;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90vw;
+  height: 90vh;
+  z-index: 10;
+  opacity: 0.3;
+  border-radius: 50%;
+  cursor: pointer;
+  display: none;
 }
 
 h1 {
@@ -264,22 +304,23 @@ h1:hover {
 }
 
 .main_section {
-    width: 300vw;
-    height: 300vh;
-    top: -100vh;
-    left: -100vw;
-    background-color: rgba(0,0,0,0.95);
-    will-change: transform;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  margin: auto;
+  inset: 0;
+  background-color: rgba(0,0,0,0.95);
+  will-change: transform;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  scale: 2;
 }
 
 .four_square_container {
   background-color: transparent;
-  position: relative;
+  position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
@@ -287,7 +328,7 @@ h1:hover {
   grid-template-areas: 
     "red blue"
     "orange green";
-  z-index: 1000000000000;
+  z-index: 5;
   pointer-events: none;
 }
 
@@ -295,51 +336,39 @@ h1:hover {
   position: relative;
   pointer-events: auto;
   cursor: pointer;
+  display: none;
 }
 
-.red {
-  grid-area: red;
-  opacity: 0.3;
-  background-color: transparent;
-}
+.red { grid-area: red; }
+.blue { grid-area: blue; }
+.orange { grid-area: orange; }
+.green { grid-area: green; }
 
-.blue {
-  grid-area: blue;
-  opacity: 0.3;
+.image_container {
   background-color: transparent;
-}
-
-.orange {
-  grid-area: orange;
-  opacity: 0.3;
-  background-color: transparent;
-}
-
-.green {
-  grid-area: green;
-  opacity: 0.3;
-  background-color: transparent;
+  width: 80%;
+  height: 80%;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1vw;
+  overflow: hidden;
 }
 
 .artwork {
-  width: 30vw;
-  cursor: pointer; 
-  transform: 
-    translateX(var(--move, 0px)) 
-    translateY(var(--move, 0px)) 
-    rotateX(var(--rot-deg, 45deg))
-    rotate(var(--rotation, 0deg));
-  border: 2px solid white;
+  max-width: 10vw;
+  cursor: pointer;
+  border: 1px solid white;
   box-shadow: 0px 0px 30px #303030;
-  transition: all 3s linear;
-  z-index: 100000;
+  object-fit: cover;
+  margin: 0px;
 }
 
 .artwork:hover {
   --rotation: 0deg;
   --move: 0px;
   --rot-deg: 0deg;
-  scale: 1 !important;
-  z-index: 10000000000 !important;
-}
-</style>
+  scale: 1.1 !important;
+}</style>
